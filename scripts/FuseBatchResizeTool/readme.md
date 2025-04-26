@@ -31,11 +31,14 @@ This is not to say it will not require manual adjustment in your fuse tool, but 
 - Resolution-agnostic batch import
 - Consistent output (200x200 BMP)
 - Mirror original folder structure
-- Clean GUI with no terminal popping up
+- Select new folder mid-session (v2+ only)
+- Choose between left and right mouse button features (v2+ only)
+- Choose output file resolution, as well as mid-session (v2+ only)
+
 
 ## How to Use
 
-1. Run the app (`manual_resizer.exe` or the Python script)
+1. Run the Python script ( `py manual_resizerv2.py` )
 2. Select the parent folder containing all your images
 3. For each image:
    - Left-click where you want the center to be
