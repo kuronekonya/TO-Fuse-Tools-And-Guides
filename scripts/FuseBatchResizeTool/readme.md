@@ -7,12 +7,18 @@ Perfect for fuse assets, sprites, or literally any image that needs to fit insid
 ## What It Does
 
 - Load a whole folder (recursively) of images
-- Click where you want the center of each image to be
-- Right-click to sample the background color
-- Pads the image to fit perfectly inside a 200x200 canvas
-- Saves as `.bmp` in a mirrored output folder
+- Configurable Click where you want the center of each image to be
+- Configurable Right-click to sample the background color
+- Pads the image to fit perfectly inside a predetermined canvas size, or input one
+- Saves as `.bmp` in a mirrored output folder, with or without a main timestamp folder
 
 No cropping. No auto-alignment weirdness. Just your eye and your click.
+
+### You Also Can...
+- Preview past crops, or view what your current one will look like
+- Configurable view of the background color and/or hex color code
+- Use the arrow keys to cycle through the picture files in the chosen folder
+
 
 ## Why?
 
@@ -26,19 +32,32 @@ This is not to say it will not require manual adjustment in your fuse tool, but 
 
 ## Features
 
-- Manual center selection (left-click)
-- Background color sampling (right-click)
+The lastest release will ALWAYS support these features! The notes are just for users using legacy versions.
+
+- Manual center selection (left-click) (configurable v2+)
+- Background color sampling (right-click) (configurable v2+)
 - Resolution-agnostic batch import
-- Consistent output (200x200 BMP)
+- Consistent output (200x200 BMP) (configurable consistent output v2+)
 - Mirror original folder structure
-- Select new folder mid-session (v2+ only)
-- Choose between left and right mouse button features (v2+ only)
-- Choose output file resolution, as well as mid-session (v2+ only)
-- Option to create timestamp-based output folders, in case you want to do multiple versions of the same one (v2+ only)
+
+### V2+
+
+- Toolbar with more options
+- Select new folder mid-session
+- Choose between left and right mouse button features
+- Choose output file resolution mid-session
+- Option to create timestamp-based output folders, in case you want to do multiple versions of the same one
+
+### V3+
+
+- Shows Background Color in a box at the top by default, which can also be toggled off, or clicked to one-time change background color
+- Allows using of arrow keys to move between images in the folder
+- Preview Mode (off by default) for the last image rendered or a preview of the crop
+- Show Hex code of the background color (off by default)
 
 ## How to Use
 
-1. Run the Python script ( `py manual_resizerv2.py` )
+1. Run the EXE (or the Python script itself if you are using an older version i.e. `pyw manual_resizer\__main__.pyw`, `py manual_resizerv2.py` etc.) 
 2. Select the parent folder containing all your images
 3. For each image:
    - Left-click where you want the center to be
@@ -48,7 +67,7 @@ This is not to say it will not require manual adjustment in your fuse tool, but 
 
 ## DISCLAIMER
 
-This is admittedly vibes code. But I looked over it and it didn't seem like anything that could blow up my computer. However, if this still ails you, I suggest reviewing the python file yourself and making something better, if you can. This is the best I got right now.
+This is admittedly vibes code. But I looked over it and it didn't seem like anything that could blow up my computer. However, if this still ails you, I suggest reviewing the python file(s) yourself and making something better, if you can. This is the best I got right now.
 
 ## If You're Using the Python Script
 
