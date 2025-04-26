@@ -34,7 +34,7 @@ This is not to say it will not require manual adjustment in your fuse tool, but 
 - Select new folder mid-session (v2+ only)
 - Choose between left and right mouse button features (v2+ only)
 - Choose output file resolution, as well as mid-session (v2+ only)
-
+- Option to create timestamp-based output folders, in case you want to do multiple versions of the same one (v2+ only)
 
 ## How to Use
 
@@ -44,7 +44,7 @@ This is not to say it will not require manual adjustment in your fuse tool, but 
    - Left-click where you want the center to be
    - Right-click on the background to set the padding color
    - Automatically moves to the next image
-4. Find your processed images in the `output_resized/` folder
+4. Find your processed images in the `output_resized/` or `output_resized/timestamp/` folder
 
 ## DISCLAIMER
 
