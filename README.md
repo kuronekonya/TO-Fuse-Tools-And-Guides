@@ -5,7 +5,7 @@ This repository is a collection of community-written tutorials, tools, and fuse 
 
 > **This repo does NOT include full copies of external tools** such as Pyro’s Nori Tool — we only link to those, with credit to their original authors.
 > 
-> **This repo's folders `recolors/` and `scripts/FuseBatchResizeTool` have been migrated to their own repositories and will be updated more there**
+> **This repo's folders [`recolors/`](https://github.com/mewsieworld/HappysFuses) and [`scripts/FuseBatchResizeTool`](https://github.com/mewsieworld/FuseBatchResizeTool) have been migrated to their own repositories and will be updated more there**
 ---
 
 ## Contents
