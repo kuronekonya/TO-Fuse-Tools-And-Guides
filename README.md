@@ -11,7 +11,7 @@ This repository is a collection of community-written tutorials, tools, and fuse 
 ## Contents
 
 - `guides/` — Step-by-step instructions on recoloring, exporting/importing fuses, and using tools; additionally, in-game guides I had made for epTO that can apply, with minimal modification, to other servers.
-- `scripts/` — Simple `.bat` scripts to streamline repetitive tasks, how to use them, and where to place them.
+- `scripts/` — Simple `.bat` scripts to streamline repetitive tasks, how to use them, and where to place them. Also, a tool for Fuse creation usage to make bulk fuses a lot easier to import.
 - `recolors/` — Prebuilt fuse assets (BMP+showcase PNGs+NRI's [although the NRI's might not be properly sorted]) available for public use
 - `templatesAndSelfTrackers/` — Some fun stuff for account management and self-pacing. Edit them as you please!
 ---
@@ -54,9 +54,10 @@ This repository is a collection of community-written tutorials, tools, and fuse 
 
 ## Usage Notes
 
-- Scripts are built for Windows
+- Scripts are built for Windows, both standalone and with Photoshop, depending on the script.
 - Recolors are indexed to be game-safe and minimize palette corruption issues.
 - All guides are designed for ease of use — no prior NRI editing experience needed.
+- Templates and Trackers have both GSheets and Excel versions.
 
 ---
 
