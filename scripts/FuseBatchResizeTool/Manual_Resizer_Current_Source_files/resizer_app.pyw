@@ -4246,6 +4246,20 @@ class ImageResizerApp:
             self.output_folder = os.path.join(get_base_path(), "output_resized", "default_fallback")
             os.makedirs(self.output_folder, exist_ok=True)
 
+        # Calculate relative path from base folder to preserve folder structure
+        if self.base_folder:
+            try:
+                # Get the relative path from base_folder to the current image
+                rel_path = os.path.relpath(os.path.dirname(img_path), self.base_folder)
+                # If the image is in the base folder itself, rel_path will be '.'
+                if rel_path == '.':
+                    rel_path = ''
+            except ValueError:
+                # If the image is on a different drive than base_folder, fall back to no subfolder
+                rel_path = ''
+        else:
+            rel_path = ''
+
         for target_w, target_h in TARGET_SIZE:
             try:
                 # Ensure the canvas background is opaque, using the RGB from self.bg_color
@@ -4283,10 +4297,17 @@ class ImageResizerApp:
                 else:
                     self.logger.info(f"Skipping paste for {target_w}x{target_h} on {original_filename} due to invalid crop box.")
 
+                # Create the full output path preserving folder structure
                 resolution_specific_folder = os.path.join(self.output_folder, f"{target_w}x{target_h}")
-                os.makedirs(resolution_specific_folder, exist_ok=True)
+                if rel_path:
+                    # Add the relative path to preserve folder structure
+                    full_output_folder = os.path.join(resolution_specific_folder, rel_path)
+                else:
+                    full_output_folder = resolution_specific_folder
+                
+                os.makedirs(full_output_folder, exist_ok=True)
                 # --- MODIFIED: Use BMP filename for output path ---
-                output_path = os.path.join(resolution_specific_folder, output_filename_bmp)
+                output_path = os.path.join(resolution_specific_folder,full_output_folder, output_filename_bmp)
                 # --- END MODIFICATION ---
                 result.save(output_path)
                 self.last_output_path = output_path

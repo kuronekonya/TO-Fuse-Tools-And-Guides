@@ -1,0 +1,148 @@
+2025-06-18 17:09:35,201 - INFO - Application initialized
+2025-06-18 17:09:35,709 - INFO - Menu created successfully
+2025-06-18 17:10:33,362 - INFO - Output folder will be timestamped: c:\Users\bayle\OneDrive\Documents\GitHub\TO-Fuse-Tools-And-Guides\scripts\FuseBatchResizeTool\Manual_Resizer_Current_Source_files\output_resized\25-06-18_17-10
+2025-06-18 17:10:33,507 - INFO - Opened folder: E:/AAA LAPTOP BACKUPS 25PLUS/2025/CoraTO/TalesweaverAssetsREAL/Cape with 12732 images
+2025-06-18 17:10:54,277 - INFO - prev_image called. Current index before: 25, Image paths count: 12732
+2025-06-18 17:10:54,277 - INFO - prev_image: New index: 24
+2025-06-18 17:10:54,635 - INFO - prev_image called. Current index before: 24, Image paths count: 12732
+2025-06-18 17:10:54,635 - INFO - prev_image: New index: 23
+2025-06-18 17:10:54,881 - INFO - prev_image called. Current index before: 23, Image paths count: 12732
+2025-06-18 17:10:54,881 - INFO - prev_image: New index: 22
+2025-06-18 17:10:55,111 - INFO - prev_image called. Current index before: 22, Image paths count: 12732
+2025-06-18 17:10:55,111 - INFO - prev_image: New index: 21
+2025-06-18 17:10:55,405 - INFO - prev_image called. Current index before: 21, Image paths count: 12732
+2025-06-18 17:10:55,405 - INFO - prev_image: New index: 20
+2025-06-18 17:10:56,610 - INFO - Background color set to (200, 204, 248, 255) at (18,1)
+2025-06-18 17:10:56,610 - INFO - Mouse button 3 click at image (18, 1): called handle_background_click with right_click_mode='background'.
+2025-06-18 17:10:57,942 - INFO - Image 22 processed successfully.
+2025-06-18 17:10:57,948 - INFO - Mouse button 1 click at image (7, 12): called handle_crop_click with left_click_mode='center'.
+2025-06-18 17:10:58,809 - INFO - Image 23 processed successfully.
+2025-06-18 17:10:58,813 - INFO - Mouse button 1 click at image (5, 12): called handle_crop_click with left_click_mode='center'.
+2025-06-18 17:10:59,674 - INFO - Image 24 processed successfully.
+2025-06-18 17:10:59,682 - INFO - Mouse button 1 click at image (9, 12): called handle_crop_click with left_click_mode='center'.
+2025-06-18 17:11:00,444 - INFO - Image 25 processed successfully.
+2025-06-18 17:11:00,448 - INFO - Mouse button 1 click at image (12, 12): called handle_crop_click with left_click_mode='center'.
+2025-06-18 17:11:03,453 - INFO - Background color set to (200, 204, 248, 255) at (11,0)
+2025-06-18 17:11:03,453 - INFO - Mouse button 3 click at image (11, 0): called handle_background_click with right_click_mode='background'.
+2025-06-18 17:11:05,783 - INFO - Image 26 processed successfully.
+2025-06-18 17:11:05,787 - INFO - Mouse button 1 click at image (2, 5): called handle_crop_click with left_click_mode='center'.
+2025-06-18 17:11:06,997 - INFO - Image 27 processed successfully.
+2025-06-18 17:11:07,001 - INFO - Mouse button 1 click at image (4, 6): called handle_crop_click with left_click_mode='center'.
+2025-06-18 17:11:07,800 - INFO - Image 28 processed successfully.
+2025-06-18 17:11:07,806 - INFO - Mouse button 1 click at image (6, 6): called handle_crop_click with left_click_mode='center'.
+2025-06-18 17:11:52,201 - INFO - prev_image called. Current index before: 221, Image paths count: 12732
+2025-06-18 17:11:52,201 - INFO - prev_image: New index: 220
+2025-06-18 17:11:52,665 - INFO - prev_image called. Current index before: 220, Image paths count: 12732
+2025-06-18 17:11:52,665 - INFO - prev_image: New index: 219
+2025-06-18 17:11:53,506 - INFO - Background color set to (184, 252, 232, 255) at (18,1)
+2025-06-18 17:11:53,506 - INFO - Mouse button 3 click at image (18, 1): called handle_background_click with right_click_mode='background'.
+2025-06-18 17:11:55,633 - INFO - Image 220 processed successfully.
+2025-06-18 17:11:55,637 - INFO - Mouse button 1 click at image (3, 14): called handle_crop_click with left_click_mode='center'.
+2025-06-18 17:11:57,040 - INFO - Image 221 processed successfully.
+2025-06-18 17:11:57,043 - INFO - Mouse button 1 click at image (0, 12): called handle_crop_click with left_click_mode='center'.
+2025-06-18 17:11:58,442 - INFO - Image 222 processed successfully.
+2025-06-18 17:11:58,446 - INFO - Mouse button 1 click at image (8, 12): called handle_crop_click with left_click_mode='center'.
+2025-06-18 17:11:59,199 - INFO - Image 223 processed successfully.
+2025-06-18 17:11:59,204 - INFO - Mouse button 1 click at image (9, 11): called handle_crop_click with left_click_mode='center'.
+2025-06-18 17:12:01,573 - INFO - Image 224 processed successfully.
+2025-06-18 17:12:01,576 - INFO - Mouse button 1 click at image (4, 12): called handle_crop_click with left_click_mode='center'.
+2025-06-18 17:12:02,684 - INFO - Image 225 processed successfully.
+2025-06-18 17:12:02,687 - INFO - Mouse button 1 click at image (0, 12): called handle_crop_click with left_click_mode='center'.
+2025-06-18 17:12:03,748 - INFO - Image 226 processed successfully.
+2025-06-18 17:12:03,751 - INFO - Mouse button 1 click at image (9, 12): called handle_crop_click with left_click_mode='center'.
+2025-06-18 17:12:05,242 - INFO - Image 227 processed successfully.
+2025-06-18 17:12:05,246 - INFO - Mouse button 1 click at image (8, 11): called handle_crop_click with left_click_mode='center'.
+2025-06-18 17:12:06,433 - INFO - Image 228 processed successfully.
+2025-06-18 17:12:06,437 - INFO - Mouse button 1 click at image (5, 12): called handle_crop_click with left_click_mode='center'.
+2025-06-18 17:12:07,330 - INFO - Image 229 processed successfully.
+2025-06-18 17:12:07,342 - INFO - Mouse button 1 click at image (0, 11): called handle_crop_click with left_click_mode='center'.
+2025-06-18 17:12:08,590 - INFO - Image 230 processed successfully.
+2025-06-18 17:12:08,593 - INFO - Mouse button 1 click at image (9, 11): called handle_crop_click with left_click_mode='center'.
+2025-06-18 17:12:18,058 - INFO - Image 231 processed successfully.
+2025-06-18 17:12:18,066 - INFO - Mouse button 1 click at image (10, 10): called handle_crop_click with left_click_mode='center'.
+2025-06-18 17:12:19,636 - INFO - Background color set to (184, 252, 232, 255) at (18,1)
+2025-06-18 17:12:19,636 - INFO - Mouse button 3 click at image (18, 1): called handle_background_click with right_click_mode='background'.
+2025-06-18 17:12:21,160 - INFO - Image 232 processed successfully.
+2025-06-18 17:12:21,163 - INFO - Mouse button 1 click at image (5, 12): called handle_crop_click with left_click_mode='center'.
+2025-06-18 17:12:22,563 - INFO - Image 233 processed successfully.
+2025-06-18 17:12:22,567 - INFO - Mouse button 1 click at image (0, 12): called handle_crop_click with left_click_mode='center'.
+2025-06-18 17:12:24,054 - INFO - Image 234 processed successfully.
+2025-06-18 17:12:24,058 - INFO - Mouse button 1 click at image (8, 11): called handle_crop_click with left_click_mode='center'.
+2025-06-18 17:12:24,802 - INFO - Image 235 processed successfully.
+2025-06-18 17:12:24,805 - INFO - Mouse button 1 click at image (9, 10): called handle_crop_click with left_click_mode='center'.
+2025-06-18 17:12:25,914 - INFO - Image 236 processed successfully.
+2025-06-18 17:12:25,918 - INFO - Mouse button 1 click at image (5, 11): called handle_crop_click with left_click_mode='center'.
+2025-06-18 17:12:26,914 - INFO - Image 237 processed successfully.
+2025-06-18 17:12:26,917 - INFO - Mouse button 1 click at image (1, 11): called handle_crop_click with left_click_mode='center'.
+2025-06-18 17:12:27,601 - INFO - Image 238 processed successfully.
+2025-06-18 17:12:27,759 - INFO - Mouse button 1 click at image (6, 11): called handle_crop_click with left_click_mode='center'.
+2025-06-18 17:12:28,737 - INFO - Image 239 processed successfully.
+2025-06-18 17:12:28,742 - INFO - Mouse button 1 click at image (9, 11): called handle_crop_click with left_click_mode='center'.
+2025-06-18 17:12:34,401 - INFO - prev_image called. Current index before: 253, Image paths count: 12732
+2025-06-18 17:12:34,401 - INFO - prev_image: New index: 252
+2025-06-18 17:12:34,708 - INFO - prev_image called. Current index before: 252, Image paths count: 12732
+2025-06-18 17:12:34,709 - INFO - prev_image: New index: 251
+2025-06-18 17:12:34,962 - INFO - prev_image called. Current index before: 251, Image paths count: 12732
+2025-06-18 17:12:34,962 - INFO - prev_image: New index: 250
+2025-06-18 17:12:35,156 - INFO - prev_image called. Current index before: 250, Image paths count: 12732
+2025-06-18 17:12:35,156 - INFO - prev_image: New index: 249
+2025-06-18 17:12:35,412 - INFO - prev_image called. Current index before: 249, Image paths count: 12732
+2025-06-18 17:12:35,412 - INFO - prev_image: New index: 248
+2025-06-18 17:12:37,883 - INFO - Background color set to (72, 88, 104, 255) at (10,6)
+2025-06-18 17:12:37,883 - INFO - Mouse button 3 click at image (10, 6): called handle_background_click with right_click_mode='background'.
+2025-06-18 17:13:33,738 - INFO - prev_image called. Current index before: 303, Image paths count: 12732
+2025-06-18 17:13:33,738 - INFO - prev_image: New index: 302
+2025-06-18 17:13:34,672 - INFO - prev_image called. Current index before: 305, Image paths count: 12732
+2025-06-18 17:13:34,673 - INFO - prev_image: New index: 304
+2025-06-18 17:13:34,893 - INFO - prev_image called. Current index before: 304, Image paths count: 12732
+2025-06-18 17:13:34,893 - INFO - prev_image: New index: 303
+2025-06-18 17:13:35,083 - INFO - prev_image called. Current index before: 303, Image paths count: 12732
+2025-06-18 17:13:35,083 - INFO - prev_image: New index: 302
+2025-06-18 17:13:37,452 - INFO - Background color set to (184, 220, 168, 255) at (47,38)
+2025-06-18 17:13:37,452 - INFO - Mouse button 3 click at image (47, 38): called handle_background_click with right_click_mode='background'.
+2025-06-18 17:13:39,420 - INFO - Image 303 processed successfully.
+2025-06-18 17:13:39,424 - INFO - Mouse button 1 click at image (49, 17): called handle_crop_click with left_click_mode='center'.
+2025-06-18 17:13:40,651 - INFO - Image 304 processed successfully.
+2025-06-18 17:13:40,655 - INFO - Mouse button 1 click at image (2, 12): called handle_crop_click with left_click_mode='center'.
+2025-06-18 17:13:42,038 - INFO - Image 305 processed successfully.
+2025-06-18 17:13:42,041 - INFO - Mouse button 1 click at image (2, 24): called handle_crop_click with left_click_mode='center'.
+2025-06-18 17:13:42,851 - INFO - Image 306 processed successfully.
+2025-06-18 17:13:42,856 - INFO - Mouse button 1 click at image (1, 21): called handle_crop_click with left_click_mode='center'.
+2025-06-18 17:13:44,072 - INFO - Image 307 processed successfully.
+2025-06-18 17:13:44,076 - INFO - Mouse button 1 click at image (26, 20): called handle_crop_click with left_click_mode='center'.
+2025-06-18 17:13:45,764 - INFO - Image 308 processed successfully.
+2025-06-18 17:13:45,768 - INFO - Mouse button 1 click at image (45, 18): called handle_crop_click with left_click_mode='center'.
+2025-06-18 17:13:46,950 - INFO - Background color set to (184, 220, 168, 255) at (30,6)
+2025-06-18 17:13:46,950 - INFO - Mouse button 3 click at image (30, 6): called handle_background_click with right_click_mode='background'.
+2025-06-18 17:13:47,247 - INFO - Background color set to (184, 220, 168, 255) at (27,3)
+2025-06-18 17:13:47,247 - INFO - Mouse button 3 click at image (27, 3): called handle_background_click with right_click_mode='background'.
+2025-06-18 17:14:01,696 - INFO - prev_image called. Current index before: 343, Image paths count: 12732
+2025-06-18 17:14:01,696 - INFO - prev_image: New index: 342
+2025-06-18 17:14:05,305 - INFO - prev_image called. Current index before: 353, Image paths count: 12732
+2025-06-18 17:14:05,305 - INFO - prev_image: New index: 352
+2025-06-18 17:14:05,550 - INFO - prev_image called. Current index before: 352, Image paths count: 12732
+2025-06-18 17:14:05,550 - INFO - prev_image: New index: 351
+2025-06-18 17:14:06,509 - INFO - prev_image called. Current index before: 351, Image paths count: 12732
+2025-06-18 17:14:06,509 - INFO - prev_image: New index: 350
+2025-06-18 17:14:09,815 - INFO - Background color set to (248, 0, 248, 255) at (33,9)
+2025-06-18 17:14:09,815 - INFO - Mouse button 3 click at image (33, 9): called handle_background_click with right_click_mode='background'.
+2025-06-18 17:14:16,019 - INFO - Image 352 processed successfully.
+2025-06-18 17:14:16,022 - INFO - Mouse button 1 click at image (17, 9): called handle_crop_click with left_click_mode='center'.
+2025-06-18 17:14:17,637 - INFO - Image 353 processed successfully.
+2025-06-18 17:14:17,641 - INFO - Mouse button 1 click at image (22, 4): called handle_crop_click with left_click_mode='center'.
+2025-06-18 17:14:18,943 - INFO - Image 354 processed successfully.
+2025-06-18 17:14:18,947 - INFO - Mouse button 1 click at image (22, 4): called handle_crop_click with left_click_mode='center'.
+2025-06-18 17:14:19,797 - INFO - Image 355 processed successfully.
+2025-06-18 17:14:19,801 - INFO - Mouse button 1 click at image (20, 7): called handle_crop_click with left_click_mode='center'.
+2025-06-18 17:14:20,700 - INFO - Image 356 processed successfully.
+2025-06-18 17:14:20,703 - INFO - Mouse button 1 click at image (22, 7): called handle_crop_click with left_click_mode='center'.
+2025-06-18 17:14:22,092 - INFO - Image 357 processed successfully.
+2025-06-18 17:14:22,095 - INFO - Mouse button 1 click at image (17, 8): called handle_crop_click with left_click_mode='center'.
+2025-06-18 17:14:24,909 - INFO - Image 358 processed successfully.
+2025-06-18 17:14:24,912 - INFO - Mouse button 1 click at image (23, 4): called handle_crop_click with left_click_mode='center'.
+2025-06-18 17:14:33,879 - INFO - prev_image called. Current index before: 360, Image paths count: 12732
+2025-06-18 17:14:33,880 - INFO - prev_image: New index: 359
+2025-06-18 17:14:36,756 - INFO - Image 360 processed successfully.
+2025-06-18 17:14:36,760 - INFO - Mouse button 1 click at image (22, 5): called handle_crop_click with left_click_mode='center'.
+2025-06-18 17:14:37,818 - INFO - Background color set to (248, 0, 248, 255) at (47,4)
+2025-06-18 17:14:37,818 - INFO - Mouse button 3 click at image (47, 4): called handle_background_click with right_click_mode='background'.
