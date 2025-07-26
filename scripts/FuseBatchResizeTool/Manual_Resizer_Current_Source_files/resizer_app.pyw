@@ -45,6 +45,10 @@ class ImageResizerApp:
             self.scroll_y = 0
             self.bg_color = (255, 0, 255, 255)  # Magenta (now RGBA)
             self.last_output_path = None
+            # Add variable to track last output file locations for each resolution
+            self.last_output_file_locations = {}  # {(width, height): file_path}
+            # Add variable to track the last processed image path
+            self.last_processed_image_path = None
             
             # Mouse and interaction flags
             self.eyedropper_active = False
@@ -126,6 +130,23 @@ class ImageResizerApp:
             # File and folder paths
             self.output_folder = OUTPUT_FOLDER
             self.base_folder = None
+            
+            # Output options
+            self.use_timestamp_output = False  # Default to False, will be set based on user choice at startup
+            
+            # File format configuration
+            self.output_format = "BMP"  # Default format
+            self.output_bit_depth = 24  # Default bit depth
+            self.format_options = {
+                "BMP": [1, 4, 8, 16, 24, 32],
+                "PNG": [8, 16, 24, 32],
+                "JPG": [8, 16, 24],
+                "JPEG": [8, 16, 24]
+            }
+            
+            # --- MODIFIED: Update output folder to include file type ---
+            self.update_output_folder_name()
+            # --- END MODIFICATION ---
             
             # UI elements
             self.log_window = None
@@ -229,7 +250,9 @@ class ImageResizerApp:
             self.root.bind("<Control-o>", lambda e: self.prompt_open_file_or_folder())
             self.root.bind("<Control-O>", lambda e: self.prompt_open_file_or_folder())
             self.root.bind("<Control-s>", lambda e: self.save_image())
-            self.root.bind("<Control-S>", lambda e: self.save_all_images())
+            self.root.bind("<Control-S>", lambda e: self.save_image())
+            self.root.bind("<Control-Shift-s>", lambda e: self.save_all_images())
+            self.root.bind("<Control-Shift-S>", lambda e: self.save_all_images())
             self.root.bind("<Control-g>", self.handle_ctrl_g_grid_toggle)
             self.root.bind("<Control-d>", lambda e: self.toggle_log_window())
             self.root.bind("<Control-m>", lambda e: self.switch_mouse_mode())
@@ -255,6 +278,13 @@ class ImageResizerApp:
                 if self.root.winfo_exists(): # Ensure root exists before scheduling destroy
                     self.root.after_idle(self.root.destroy)
                 return # Stop further initialization
+            
+            # Safety check: Ensure TARGET_SIZE is valid
+            global TARGET_SIZE
+            if not TARGET_SIZE or not isinstance(TARGET_SIZE, (list, tuple)) or len(TARGET_SIZE) == 0:
+                self.logger.error("TARGET_SIZE is invalid after ask_target_size. Setting default resolution.")
+                TARGET_SIZE = [(200, 200)]  # Set a default resolution
+                messagebox.showwarning("Default Resolution Set", "No valid resolutions were configured. Using default 200x200 resolution.", parent=self.root)
             
             # Then, if the app hasn't quit from ask_target_size, prompt for initial file/folder
             if self.root.winfo_exists(): # Check if window still exists (it should if we haven't returned)
@@ -282,17 +312,8 @@ class ImageResizerApp:
 
     def prompt_initial_open_choice(self):
         """Handles the initial prompt to open a file or folder during startup.
-           If the user cancels and no images are loaded, the application will exit gracefully."""
+           If the user cancels and no images are loaded, the application will continue with an empty state."""
         self.prompt_open_file_or_folder() # This will show the dialog and potentially load images
-
-        # After the dialog, if no images were loaded (user cancelled everything)
-        # and it's still the initial setup (no current_image loaded yet),
-        # then inform the user and prepare to exit.
-        if not self.image_paths and self.current_image is None:
-            if self.root.winfo_exists(): # Check if root window still exists
-                messagebox.showinfo("Exiting", "No image or folder selected. The application will now exit.", parent=self.root)
-                # self.root.quit() # Old direct quit
-                return False # Indicate abort
         return True # Indicate success or continue
 
     def activate_eyedropper(self, event=None):
@@ -501,7 +522,7 @@ class ImageResizerApp:
             menubar.add_cascade(label="📁 File", menu=file_menu)
             file_menu.add_command(label="📂 Open...", command=self.prompt_open_file_or_folder)
             file_menu.add_separator()
-            file_menu.add_command(label="📏 Change Resolution...", command=self.ask_target_size)
+            file_menu.add_command(label="🛠️ Output File Settings...", command=self.ask_output_settings)
             file_menu.add_command(label="📁 Change Output Folder...", command=self.change_output_folder)
             file_menu.add_separator()
             file_menu.add_command(label="❌ Exit", command=self.root.quit)
@@ -771,134 +792,176 @@ class ImageResizerApp:
         except Exception as e:
             self.logger.warning(f"Error switching mouse mode: {str(e)}")
             
-    def ask_target_size(self):
-        # This is one of the methods that appeared duplicated in the original file.
-        # Ensuring a single, correct version is restored.
-        global TARGET_SIZE
-        picker = ResolutionPicker(self.root) # Assuming ResolutionPicker is correctly defined/imported
-        picker.withdraw() # Hide initially to prevent flicker
-        # Make picker modal to the root window
+    def ask_output_settings(self):
+        """Open the Output Settings dialog for resolutions, file format, and bit depth."""
+        from resolution_picker import ResolutionPicker
+        picker = ResolutionPicker(
+            self.root,
+            initial_format=self.output_format,
+            initial_bit_depth=self.output_bit_depth,
+            format_options=self.format_options
+        )
+        picker.withdraw()
         picker.transient(self.root)
         picker.grab_set()
-
-        # Center the picker dialog on the screen
-        picker.update_idletasks() # Allow picker to calculate its own required size
+        picker.update_idletasks()
         width = picker.winfo_width()
         height = picker.winfo_height()
-
         screen_w = picker.winfo_screenwidth()
         screen_h = picker.winfo_screenheight()
         x = (screen_w // 2) - (width // 2)
         y = (screen_h // 2) - (height // 2)
-
         picker.geometry(f"{width}x{height}+{x}+{y}")
-
-        # NOTE: ResolutionPicker should ideally position itself (e.g., center on parent)
-        # in its __init__ method before this deiconify call.
-        picker.deiconify() # Show it now that it's configured
-        self.root.wait_window(picker) # Wait for picker dialog to close
-
+        picker.deiconify()
+        self.root.wait_window(picker)
         if picker.result:
-            TARGET_SIZE = picker.result
-            self.update_preview_mode_menu() # Update preview options if resolutions change
-            self.root.update_idletasks()
-            current_width = self.root.winfo_width()
-            if current_width < 400:
-                self.root.geometry(f"400x{self.root.winfo_height()}")
-            if self.current_image is not None: # If processing already started
-                messagebox.showinfo("Resolution Updated",
-                    f"Selected {len(TARGET_SIZE)} resolution(s):\n"
-                    + "\n".join(f"{w}x{h}" for w, h in TARGET_SIZE), parent=self.root)
-            return True # Indicate success
-        else: # Picker was cancelled
-             if self.current_image is None and not TARGET_SIZE: # No image loaded AND no target sizes set from before
-                 self.logger.info("ask_target_size: Picker cancelled on initial launch with no prior TARGET_SIZE. Aborting.")
-                 # Ensuring self.root is still valid before quitting
-                 if self.root and self.root.winfo_exists():
-                    # self.root.quit() # Old direct quit
-                    return False # Indicate abort
-             else:
-                  self.logger.info("ask_target_size: Picker cancelled, but continuing with existing TARGET_SIZE or loaded image.")
-                  if TARGET_SIZE: # Only show warning if there was a previous setting
-                    messagebox.showwarning("Resolution Not Changed", "Resolution selection was cancelled. Using previous settings.", parent=self.root)
-             return True # Indicate continue even if warning was shown
+            try:
+                resolutions, fmt, bit_depth = picker.result
+                # Validate that resolutions is not empty
+                if not resolutions or not isinstance(resolutions, (list, tuple)) or len(resolutions) == 0:
+                    messagebox.showerror("Error", "No valid resolutions were selected. Please try again.", parent=self.root)
+                    return False
+                
+                global TARGET_SIZE
+                TARGET_SIZE = resolutions
+                self.output_format = fmt
+                self.output_bit_depth = bit_depth
+                self.update_output_folder_name()
+                self.update_preview_mode_menu()
+                
+                # Update crop previews if they're active
+                if self.preview_mode_var.get() == "Show Crop Preview" and self.current_image:
+                    self.update_crop_previews_for_new_settings()
+                
+                # Refresh crop preview settings dialog if it's open
+                if hasattr(self, 'crop_settings_dialog') and self.crop_settings_dialog and self.crop_settings_dialog.winfo_exists():
+                    self.refresh_crop_preview_settings_dialog()
+                
+                self.root.update_idletasks()
+                current_width = self.root.winfo_width()
+                if current_width < 400:
+                    self.root.geometry(f"400x{self.root.winfo_height()}")
+                if self.current_image is not None:
+                    messagebox.showinfo(
+                        "Output Settings Updated",
+                        f"Selected {len(TARGET_SIZE)} resolution(s):\n" + "\n".join(f"{w}x{h}" for w, h in TARGET_SIZE) +
+                        f"\n\nFormat: {self.output_format}, Bit Depth: {self.output_bit_depth}",
+                        parent=self.root
+                    )
+                return True
+            except Exception as e:
+                self.logger.error(f"Error processing resolution picker result: {str(e)}")
+                messagebox.showerror("Error", f"Failed to process resolution settings: {str(e)}", parent=self.root)
+                return False
+        else:
+            if self.current_image is None and not TARGET_SIZE:
+                self.logger.info("ask_output_settings: Picker cancelled on initial launch with no prior TARGET_SIZE. Aborting.")
+                if self.root and self.root.winfo_exists():
+                    return False
+            else:
+                self.logger.info("ask_output_settings: Picker cancelled, but continuing with existing settings.")
+                if TARGET_SIZE:
+                    messagebox.showwarning("Settings Not Changed", "Output settings dialog was cancelled. Using previous settings.", parent=self.root)
+            return True
+
+    def ask_target_size(self):
+        """Legacy method - now redirects to ask_output_settings for backward compatibility."""
+        return self.ask_output_settings()
 
     def show_image(self):
-        if not self.image_paths:
+        """Display the current image."""
+        if not self.image_paths or self.current_index >= len(self.image_paths):
             return
-        img_path = self.image_paths[self.current_index]
-        self.current_image = Image.open(img_path).convert("RGBA")
-
-        self.display_image = self.current_image.copy()
-
-        screen_width = self.root.winfo_screenwidth() - 100
-        screen_height = self.root.winfo_screenheight() - 100
-        max_display_size = (screen_width, screen_height)
 
         try:
-            resample_filter = Image.Resampling.LANCZOS
-        except AttributeError:
-            resample_filter = Image.ANTIALIAS
-
-        # First create the base thumbnail
-        self.display_image.thumbnail(max_display_size, resample_filter)
-
-        # Store the base size for zoom calculations
-        self.base_width = self.display_image.width
-        self.base_height = self.display_image.height
-
-        # Apply zoom
-        if self.zoom_level != 1.0:
-            new_width = int(self.base_width * self.zoom_level)
-            new_height = int(self.base_height * self.zoom_level)
-            # Ensure minimum size of 1x1 for resized image
-            new_width = max(1, new_width)
-            new_height = max(1, new_height)
-            self.display_image = self.display_image.resize((new_width, new_height), resample_filter)
-
-        try:
-            self.tk_image = ImageTk.PhotoImage(self.display_image)
-            self.canvas.delete("all")
-
-            # Update the display including both canvas and bg color label
-            self.update_bg_color_display()
-
-            # Get the current canvas size
-            canvas_w = self.canvas.winfo_width()
-            canvas_h = self.canvas.winfo_height()
-
-            # Calculate center position with scroll offset
-            self.image_x = canvas_w // 2 + self.scroll_x
-            self.image_y = canvas_h // 2 + self.scroll_y
-
-            # Create image at center position
-            self.canvas.create_image(self.image_x, self.image_y, anchor=tk.CENTER, image=self.tk_image)
-
-            # Update the grid if it's enabled
-            if self.show_grid_var.get():
-                self.update_grid()
+            # Only clear stored file locations when loading a completely new image set
+            # Don't clear when moving between images in the same set
+            if not hasattr(self, '_current_image_set') or self._current_image_set != self.image_paths:
+                self.last_output_file_locations = {}
+                self._current_image_set = self.image_paths.copy()
             
-            # Force update of the display
-            self.root.update_idletasks()
-            self.root.update()
-            
+            img_path = self.image_paths[self.current_index]
+            self.current_image = Image.open(img_path).convert("RGBA")
+
+            self.display_image = self.current_image.copy()
+
+            screen_width = self.root.winfo_screenwidth() - 100
+            screen_height = self.root.winfo_screenheight() - 100
+            max_display_size = (screen_width, screen_height)
+
+            try:
+                resample_filter = Image.Resampling.LANCZOS
+            except AttributeError:
+                resample_filter = Image.ANTIALIAS
+
+            # First create the base thumbnail
+            self.display_image.thumbnail(max_display_size, resample_filter)
+
+            # Store the base size for zoom calculations
+            self.base_width = self.display_image.width
+            self.base_height = self.display_image.height
+
+            # Apply zoom
+            if self.zoom_level != 1.0:
+                new_width = int(self.base_width * self.zoom_level)
+                new_height = int(self.base_height * self.zoom_level)
+                # Ensure minimum size of 1x1 for resized image
+                new_width = max(1, new_width)
+                new_height = max(1, new_height)
+                self.display_image = self.display_image.resize((new_width, new_height), resample_filter)
+
+            try:
+                self.tk_image = ImageTk.PhotoImage(self.display_image)
+                self.canvas.delete("all")
+
+                # Update the display including both canvas and bg color label
+                self.update_bg_color_display()
+
+                # Get the current canvas size
+                canvas_w = self.canvas.winfo_width()
+                canvas_h = self.canvas.winfo_height()
+
+                # Calculate center position with scroll offset
+                self.image_x = canvas_w // 2 + self.scroll_x
+                self.image_y = canvas_h // 2 + self.scroll_y
+
+                # Create image at center position
+                self.canvas.create_image(self.image_x, self.image_y, anchor=tk.CENTER, image=self.tk_image)
+
+                # Update the grid if it's enabled
+                if self.show_grid_var.get():
+                    self.update_grid()
+                
+                # Update preview systems for the new image
+                self.update_preview_systems_for_new_image()
+                
+                # Force update of the display
+                self.root.update_idletasks()
+                self.root.update()
+                
+            except Exception as e:
+                self.logger.error(f"Error in show_image during PhotoImage creation or display: {str(e)}")
+                self.logger.error(traceback.format_exc())
+                self.tk_image = None # Ensure tk_image is None if it failed
+                self.canvas.delete("all") # Clear canvas
+                # Optionally display an error message on the canvas
+                canvas_w = self.canvas.winfo_width()
+                canvas_h = self.canvas.winfo_height()
+                if canvas_w > 0 and canvas_h > 0: # Check if canvas has valid dimensions
+                     self.canvas.create_text(
+                         canvas_w / 2, 
+                         canvas_h / 2, 
+                         text="Error displaying image.\\nCheck debug console (Ctrl+D) or resizer_debug.log.", 
+                         fill="red", 
+                         justify=tk.CENTER
+                     )
+                return # Early exit if image display fails critically
+
         except Exception as e:
-            self.logger.error(f"Error in show_image during PhotoImage creation or display: {str(e)}")
+            self.logger.error(f"Error in show_image: {str(e)}")
             self.logger.error(traceback.format_exc())
-            self.tk_image = None # Ensure tk_image is None if it failed
-            self.canvas.delete("all") # Clear canvas
-            # Optionally display an error message on the canvas
-            canvas_w = self.canvas.winfo_width()
-            canvas_h = self.canvas.winfo_height()
-            if canvas_w > 0 and canvas_h > 0: # Check if canvas has valid dimensions
-                 self.canvas.create_text(
-                     canvas_w / 2, 
-                     canvas_h / 2, 
-                     text="Error displaying image.\\nCheck debug console (Ctrl+D) or resizer_debug.log.", 
-                     fill="red", 
-                     justify=tk.CENTER
-                 )
-            return # Early exit if image display fails critically
+            messagebox.showerror("Error", f"Failed to display image: {str(e)}")
+            return
 
     def handle_mouse_click(self, event):
         """Handle mouse clicks based on current mode."""
@@ -980,55 +1043,8 @@ class ImageResizerApp:
                    self.last_output_window.winfo_exists():
 
                     print(f"DEBUG handle_crop_click: Triggering update for Last Output Preview.")
-
-                    # Clear existing placeholder or old previews
-                    if hasattr(self, 'last_output_previews_frame') and self.last_output_previews_frame.winfo_exists():
-                        for widget in self.last_output_previews_frame.winfo_children():
-                            widget.destroy() # Remove placeholder/old previews
-                    else:
-                        print("ERROR handle_crop_click: last_output_previews_frame missing.")
-                        # Consider adding error handling or trying to recreate the frame if needed
-
-                    # Reset preview_windows dictionary for this mode (holds the Frame widgets)
-                    self.preview_windows = {}
-
-                    # Populate with new previews and calculate required size
-                    max_width = 0
-                    total_height = 0
-                    padding = 20 # Padding between preview frames
-
-                    # Use TARGET_SIZE directly
-                    if 'TARGET_SIZE' in globals() and isinstance(TARGET_SIZE, (list, tuple)):
-                        for res_w, res_h in TARGET_SIZE: # Use different variable names
-                            # This call populates the self.last_output_previews_frame
-                            self.update_last_output_preview(res_w, res_h) # Use res_w, res_h
-
-                            # Track estimated dimensions for resizing
-                            frame_key = (res_w, res_h)
-                            if frame_key in self.preview_windows and self.preview_windows[frame_key].winfo_exists():
-                                # Estimate size
-                                est_frame_width = res_w + 22  # Approx canvas + padding/border
-                                est_frame_height = res_h + 52 # Approx canvas + label + padding/border
-                                max_width = max(max_width, est_frame_width)
-                                total_height += est_frame_height + padding # Add padding between frames
-                                print(f"DEBUG handle_crop_click: Frame {res_w}x{res_h} est size: {est_frame_width}x{est_frame_height}. New max_w={max_width}, total_h={total_height}")
-
-                        # Calculate minimum width based on title
-                        try:
-                            title_font = font.nametofont("TkDefaultFont").copy() # Use imported font
-                            min_title_width = title_font.measure(self.last_output_window.title()) + 40
-                        except Exception:
-                            min_title_width = 200 # Fallback
-
-                        # Calculate final size (adjust total height calculation slightly)
-                        final_width = max(max_width + 40, min_title_width) # Add padding/borders
-                        final_height = total_height - padding + 40 # Subtract last padding, add border/padding
-                        print(f"DEBUG handle_crop_click: Calculated final size: {final_width}x{final_height}")
-
-                        # Apply resize using the safe, delayed method
-                        self.apply_geometry_safely(self.last_output_window, final_width, final_height)
-                    else:
-                        print("ERROR handle_crop_click: TARGET_SIZE not available or not iterable for preview update.")
+                    # Use the proper refresh method that respects dialog settings
+                    self._refresh_last_output_previews_from_dialog_vars()
                 # --- END Trigger ---
 
                 # Move to next image
@@ -1076,6 +1092,11 @@ class ImageResizerApp:
 
         # Get the image coordinates
         img_x, img_y = self.correct_coordinates(event)
+        
+        # Store cursor coordinates for preview systems
+        if img_x is not None and img_y is not None:
+            self.cursor_x = img_x
+            self.cursor_y = img_y
         
         if img_x is None or img_y is None:
             self.clear_crosshair() # Clear crosshair if coords are invalid
@@ -1414,18 +1435,39 @@ class ImageResizerApp:
 
         try:
             # Get the output path for this resolution
-            if not self.image_paths or self.current_index >= len(self.image_paths):
-                 print("DEBUG update_last_output_preview: Invalid current_index or no image_paths.")
-                 return
-            img_path = self.image_paths[self.current_index]
+            # Use the last processed image path, fallback to current image if none exists
+            if hasattr(self, 'last_processed_image_path') and self.last_processed_image_path:
+                img_path = self.last_processed_image_path
+                print(f"DEBUG update_last_output_preview: Using last processed image: {img_path}")
+            elif self.image_paths and self.current_index < len(self.image_paths):
+                img_path = self.image_paths[self.current_index]
+                print(f"DEBUG update_last_output_preview: Using current image (no processed image): {img_path}")
+            else:
+                print("DEBUG update_last_output_preview: No image path available.")
+                return
+            
             if not hasattr(self, 'output_folder') or not self.output_folder:
                  print("DEBUG update_last_output_preview: Output folder not set.")
                  return
-            # --- MODIFIED: Construct BMP filename for preview ---
-            base_filename = os.path.splitext(os.path.basename(img_path))[0]
-            bmp_filename = base_filename + ".bmp"
-            output_path = os.path.join(self.output_folder, f"{width}x{height}", bmp_filename)
-            # --- END MODIFICATION ---
+            
+            # Try to use stored file location first, fallback to path reconstruction
+            frame_key = (width, height)
+            if (hasattr(self, 'last_output_file_locations') and frame_key in self.last_output_file_locations and
+                hasattr(self, 'last_processed_image_path') and self.last_processed_image_path and
+                self.last_processed_image_path == img_path):
+                output_path = self.last_output_file_locations[frame_key]
+                print(f"DEBUG update_last_output_preview: Using stored path for {width}x{height}: {output_path}")
+            else:
+                # Fallback to path reconstruction (for backward compatibility or when stored path doesn't match)
+                # --- MODIFIED: Use dynamic file extension for preview ---
+                base_filename = os.path.splitext(os.path.basename(img_path))[0]
+                output_filename = base_filename + "." + self.get_file_extension()
+                # Fix path to match the actual structure created by process_image
+                format_bitdepth_folder = f"{self.output_format.lower()}{self.output_bit_depth}"
+                output_path = os.path.join(self.output_folder, format_bitdepth_folder, f"{width}x{height}", output_filename)
+                # --- END MODIFICATION ---
+                print(f"DEBUG update_last_output_preview: Using reconstructed path for {width}x{height}: {output_path}")
+            
             print(f"DEBUG update_last_output_preview: Checking path: {output_path}")
 
             # --- Find or Create Frame *within* the designated previews frame --- 
@@ -2995,7 +3037,6 @@ class ImageResizerApp:
                 visible_img_center_y_on_canvas = (max(img_top_on_canvas, 0) + min(img_top_on_canvas + tk_img_height, canvas_h)) / 2
                 sample_orig_y = max(0, min(int((visible_img_center_y_on_canvas - img_top_on_canvas) / actual_scaled_cell_h), orig_img_height -1))
 
-
                 line_id = self.canvas.create_line(
                     line_x, draw_y1,
                     line_x, draw_y2,
@@ -3507,15 +3548,26 @@ class ImageResizerApp:
 
     def _refresh_last_output_previews_from_dialog_vars(self):
         """Refreshes the content of the main self.last_output_window based on self.last_output_dialog_vars."""
+        print(f"DEBUG _refresh_last_output_previews_from_dialog_vars: Starting refresh")
+        print(f"DEBUG _refresh_last_output_previews_from_dialog_vars: Mode = {self.preview_mode_var.get()}")
+        print(f"DEBUG _refresh_last_output_previews_from_dialog_vars: last_output_window exists = {hasattr(self, 'last_output_window') and self.last_output_window and self.last_output_window.winfo_exists()}")
+        print(f"DEBUG _refresh_last_output_previews_from_dialog_vars: last_output_previews_frame exists = {hasattr(self, 'last_output_previews_frame') and self.last_output_previews_frame and self.last_output_previews_frame.winfo_exists()}")
+        
         if not (self.preview_mode_var.get() == "Show Last Output" and 
                 hasattr(self, 'last_output_window') and self.last_output_window and self.last_output_window.winfo_exists() and
                 hasattr(self, 'last_output_previews_frame') and self.last_output_previews_frame and self.last_output_previews_frame.winfo_exists()):
             self.logger.debug("_refresh_last_output_previews_from_dialog_vars: Conditions not met for refresh (mode not active or windows missing).")
+            print("DEBUG _refresh_last_output_previews_from_dialog_vars: Conditions not met, returning early")
             return
 
         if not hasattr(self, 'last_output_dialog_vars') or len(self.last_output_dialog_vars) != len(TARGET_SIZE):
             self.logger.warning("_refresh_last_output_previews_from_dialog_vars: last_output_dialog_vars mismatch or not found.")
+            print(f"DEBUG _refresh_last_output_previews_from_dialog_vars: Dialog vars issue - has vars: {hasattr(self, 'last_output_dialog_vars')}, vars length: {len(self.last_output_dialog_vars) if hasattr(self, 'last_output_dialog_vars') else 'N/A'}, TARGET_SIZE length: {len(TARGET_SIZE)}")
             return
+
+        print(f"DEBUG _refresh_last_output_previews_from_dialog_vars: All conditions met, proceeding with refresh")
+        print(f"DEBUG _refresh_last_output_previews_from_dialog_vars: TARGET_SIZE = {TARGET_SIZE}")
+        print(f"DEBUG _refresh_last_output_previews_from_dialog_vars: last_output_dialog_vars = {[var.get() for var in self.last_output_dialog_vars]}")
 
         # Clear existing previews in the frame
         for widget in self.last_output_previews_frame.winfo_children():
@@ -3530,6 +3582,7 @@ class ImageResizerApp:
         for i, (w, h) in enumerate(TARGET_SIZE):
             if self.last_output_dialog_vars[i].get(): # Check if this resolution is selected in the dialog
                 any_preview_shown = True
+                print(f"DEBUG _refresh_last_output_previews_from_dialog_vars: Creating preview for {w}x{h}")
                 # self.update_last_output_preview(w, h) creates and packs a frame (containing a label and canvas)
                 # into self.last_output_previews_frame. It also stores a reference to this frame
                 # in self.preview_windows[(w,h)].
@@ -3540,6 +3593,8 @@ class ImageResizerApp:
                 est_frame_height = h + 52 # Approx canvas height + label height + internal padding/border
                 max_width_needed = max(max_width_needed, est_frame_width)
                 total_height_needed += est_frame_height + padding_between_previews
+
+        print(f"DEBUG _refresh_last_output_previews_from_dialog_vars: any_preview_shown = {any_preview_shown}")
 
         if not any_preview_shown:
              ttk.Label(self.last_output_previews_frame,
@@ -3557,6 +3612,7 @@ class ImageResizerApp:
             final_width = max(max_width_needed + 40, min_title_width, 250) # Outer window padding, ensure min width
             final_height = max(total_height_needed - padding_between_previews + 40, 150) # Correct total height, ensure min height
         
+        print(f"DEBUG _refresh_last_output_previews_from_dialog_vars: Setting window size to {final_width}x{final_height}")
         self.logger.info(f"Resizing last_output_window to {final_width}x{final_height} based on dialog vars.")
         self.apply_geometry_safely(self.last_output_window, final_width, final_height)
         # self.last_output_window.update_idletasks() # May not be needed if apply_geometry_safely handles it
@@ -3581,8 +3637,13 @@ class ImageResizerApp:
                 parent=self.root
             )
 
+            # Set the global timestamp option based on user choice
+            self.use_timestamp_output = use_timestamp
+
+            # --- MODIFIED: Use base output_resized folder as shown in manual ---
             base_output_root = os.path.join(get_base_path(), "output_resized")
             os.makedirs(base_output_root, exist_ok=True)
+            # --- END MODIFICATION ---
 
             if use_timestamp:
                 timestamp = datetime.now().strftime("%y-%m-%d_%H-%M") # Updated format
@@ -3603,9 +3664,10 @@ class ImageResizerApp:
             self.logger.error(f"Error setting up output folder: {str(e)}")
             messagebox.showerror("Output Folder Error", f"Failed to set up output folder: {str(e)}", parent=self.root)
             # Fallback to a non-timestamped default if setup fails
+            # --- MODIFIED: Use base output_resized folder as fallback ---
             self.output_folder = os.path.join(get_base_path(), "output_resized")
             os.makedirs(self.output_folder, exist_ok=True)
-
+            # --- END MODIFICATION ---
 
     def _open_single_file_action(self):
         """Handles the logic for opening a single image file."""
@@ -3679,7 +3741,7 @@ class ImageResizerApp:
             # Create dialog window
             dialog = tk.Toplevel(self.root)
             dialog.title("Change Output Folder")
-            dialog.geometry("450x200") # Fixed size for this dialog
+            dialog.geometry("450x250") # Made taller to accommodate new checkbox
             dialog.resizable(False, False)
             dialog.grab_set()  # Make window modal
             dialog.transient(self.root) # Associate with root window
@@ -3689,6 +3751,7 @@ class ImageResizerApp:
             # is_default_output = (self.output_folder == os.path.join(get_base_path(), "output_resized")) # No longer needed for default checkmark
             use_default_var = tk.BooleanVar(value=True) # <<< SET TO TRUE FOR DEFAULT CHECKED >>>
             current_folder_var = tk.StringVar(value=self.output_folder)
+            use_timestamp_var = tk.BooleanVar(value=self.use_timestamp_output) # Add timestamp variable
             
             # Create main frame
             main_frame = ttk.Frame(dialog, padding=10)
@@ -3719,6 +3782,14 @@ class ImageResizerApp:
             )
             browse_button.pack(side=tk.RIGHT, padx=5, pady=5)
             
+            # Add timestamp checkbox
+            timestamp_check = ttk.Checkbutton(
+                main_frame,
+                text="Use Timestamp Filetree System",
+                variable=use_timestamp_var
+            )
+            timestamp_check.pack(anchor=tk.W, pady=(10, 0))
+            
             # Bottom buttons
             button_frame_bottom = ttk.Frame(main_frame) # Renamed to avoid clash if any
             button_frame_bottom.pack(fill=tk.X, pady=(20, 0), side=tk.BOTTOM)
@@ -3736,6 +3807,7 @@ class ImageResizerApp:
                 command=lambda: self.apply_output_folder(
                     use_default_var.get(), 
                     current_folder_var.get(),
+                    use_timestamp_var.get(), # Pass timestamp setting
                     dialog # Pass dialog to be destroyed by apply_output_folder
                 )
             )
@@ -3752,7 +3824,9 @@ class ImageResizerApp:
     
     def toggle_path_widgets(self, entry_widget, button_widget, use_default_bool, folder_str_var):
         """Toggle state of path-related widgets and updates folder_str_var if default is chosen."""
+        # --- MODIFIED: Use base output_resized folder as default path ---
         default_path = os.path.join(get_base_path(), "output_resized")
+        # --- END MODIFICATION ---
         if use_default_bool:
             entry_widget.configure(state="disabled")
             button_widget.configure(state="disabled")
@@ -3770,43 +3844,45 @@ class ImageResizerApp:
         if folder:
             folder_var.set(folder)
     
-    def apply_output_folder(self, use_default, custom_folder_path, dialog_to_destroy):
+    def apply_output_folder(self, use_default, custom_folder_path, use_timestamp, dialog_to_destroy):
         """Apply the output folder settings and close dialog."""
         try:
-            if use_default:
-                self.output_folder = os.path.join(get_base_path(), "output_resized")
-            else:
-                # Validate custom_folder_path
-                if not custom_folder_path or not isinstance(custom_folder_path, str):
-                    messagebox.showerror("Invalid Path", "Custom folder path is not valid.", parent=dialog_to_destroy)
-                    return # Don't close dialog
-                
-                if os.path.isdir(custom_folder_path):
-                    self.output_folder = custom_folder_path
-                else:
-                    # Ask user if they want to create it
-                    if messagebox.askyesno("Create Folder?", f"The path '{custom_folder_path}' does not exist or is not a directory. Create it?", parent=dialog_to_destroy):
-                        try:
-                            os.makedirs(custom_folder_path, exist_ok=True)
-                            self.output_folder = custom_folder_path
-                        except Exception as e_create:
-                            self.logger.error(f"Failed to create directory {custom_folder_path}: {e_create}")
-                            messagebox.showerror("Creation Failed", f"Could not create directory: {e_create}", parent=dialog_to_destroy)
-                            return # Don't close dialog
-                    else:
-                        return # User chose not to create, so don't close dialog
+            # Update the timestamp setting
+            self.use_timestamp_output = use_timestamp
             
-            # Ensure the final output folder exists (might be redundant if created above, but safe)
-            os.makedirs(self.output_folder, exist_ok=True)
-            self.logger.info(f"Output folder set to: {self.output_folder}")
-            messagebox.showinfo("Output Folder Set", f"Output folder has been set to:\\n{self.output_folder}", parent=self.root) # Parent to root
+            if use_default:
+                # Use default output folder
+                self.output_folder = os.path.join(get_base_path(), "output_resized")
+                self.logger.info("Using default output folder")
+            else:
+                # Use custom folder path
+                if custom_folder_path and custom_folder_path.strip():
+                    self.output_folder = custom_folder_path.strip()
+                    self.logger.info(f"Using custom output folder: {self.output_folder}")
+                else:
+                    messagebox.showerror("Error", "Please enter a valid folder path.", parent=dialog_to_destroy)
+                    return
+            
+            # Ensure the output folder exists
+            if not os.path.exists(self.output_folder):
+                os.makedirs(self.output_folder, exist_ok=True)
+            
+            # Update the output folder display
+            self.update_output_folder_name()
+            
+            # Close the dialog
             dialog_to_destroy.destroy()
             
+            # Show confirmation message
+            status = "enabled" if self.use_timestamp_output else "disabled"
+            messagebox.showinfo("Output Folder Updated", 
+                              f"Output folder set to: {self.output_folder}\n"
+                              f"Timestamp filetree system: {status}", 
+                              parent=self.root)
+            
         except Exception as e:
-            self.logger.warning(f"Error setting output folder: {str(e)}")
-            # Ensure parent is the dialog if it still exists, otherwise root
-            parent_for_error = dialog_to_destroy if dialog_to_destroy.winfo_exists() else self.root
-            messagebox.showerror("Error", f"Failed to set output folder: {str(e)}", parent=parent_for_error)
+            self.logger.error(f"Error applying output folder settings: {str(e)}")
+            messagebox.showerror("Error", f"Failed to apply output folder settings: {str(e)}", parent=dialog_to_destroy)
 
     def shorten_path(self, path_to_shorten):
         """Shorten a path for display, e.g., 'C:\\\\User\\\\...\\\\Folder'."""
@@ -4175,75 +4251,33 @@ class ImageResizerApp:
             self.logger.error(f"Invalid RGB tuple for rgb_to_hex: {rgb_tuple} - {e}")
             return "#000000" # Fallback to black
 
-    def ask_target_size(self):
-        # This is one of the methods that appeared duplicated in the original file.
-        # Ensuring a single, correct version is restored.
-        global TARGET_SIZE
-        picker = ResolutionPicker(self.root) # Assuming ResolutionPicker is correctly defined/imported
-        picker.withdraw() # Hide initially to prevent flicker
-        # Make picker modal to the root window
-        picker.transient(self.root)
-        picker.grab_set()
-
-        # Center the picker dialog on the screen
-        picker.update_idletasks() # Allow picker to calculate its own required size
-        width = picker.winfo_width()
-        height = picker.winfo_height()
-
-        screen_w = picker.winfo_screenwidth()
-        screen_h = picker.winfo_screenheight()
-        x = (screen_w // 2) - (width // 2)
-        y = (screen_h // 2) - (height // 2)
-
-        picker.geometry(f"{width}x{height}+{x}+{y}")
-
-        # NOTE: ResolutionPicker should ideally position itself (e.g., center on parent)
-        # in its __init__ method before this deiconify call.
-        picker.deiconify() # Show it now that it's configured
-        self.root.wait_window(picker) # Wait for picker dialog to close
-
-        if picker.result:
-            TARGET_SIZE = picker.result
-            self.update_preview_mode_menu() # Update preview options if resolutions change
-            self.root.update_idletasks()
-            current_width = self.root.winfo_width()
-            if current_width < 400:
-                self.root.geometry(f"400x{self.root.winfo_height()}")
-            if self.current_image is not None: # If processing already started
-                messagebox.showinfo("Resolution Updated",
-                    f"Selected {len(TARGET_SIZE)} resolution(s):\n"
-                    + "\n".join(f"{w}x{h}" for w, h in TARGET_SIZE), parent=self.root)
-            return True # Indicate success
-        else: # Picker was cancelled
-             if self.current_image is None and not TARGET_SIZE: # No image loaded AND no target sizes set from before
-                 self.logger.info("ask_target_size: Picker cancelled on initial launch with no prior TARGET_SIZE. Aborting.")
-                 # Ensuring self.root is still valid before quitting
-                 if self.root and self.root.winfo_exists():
-                    # self.root.quit() # Old direct quit
-                    return False # Indicate abort
-             else:
-                  self.logger.info("ask_target_size: Picker cancelled, but continuing with existing TARGET_SIZE or loaded image.")
-                  if TARGET_SIZE: # Only show warning if there was a previous setting
-                    messagebox.showwarning("Resolution Not Changed", "Resolution selection was cancelled. Using previous settings.", parent=self.root)
-             return True # Indicate continue even if warning was shown
-
     def process_image(self, center_x=None, center_y=None):
         """Process the current image with the current settings."""
         if not self.current_image or not TARGET_SIZE:
             self.logger.warning("process_image called with no current_image or no TARGET_SIZE.")
             return False
 
+        # Additional safety check for TARGET_SIZE validity
+        if not isinstance(TARGET_SIZE, (list, tuple)) or len(TARGET_SIZE) == 0:
+            self.logger.error("TARGET_SIZE is invalid or empty. Cannot process image.")
+            messagebox.showerror("Error", "No valid resolutions configured. Please set output settings first.", parent=self.root)
+            return False
+
         img_path = self.image_paths[self.current_index]
+        # Store the path of the image being processed for last output preview
+        self.last_processed_image_path = img_path
         original_filename = os.path.basename(img_path)
         base_original_filename, _ = os.path.splitext(original_filename)
-        # --- MODIFIED: Output filename to .bmp ---
-        output_filename_bmp = base_original_filename + ".bmp"
+        # --- MODIFIED: Use dynamic file extension based on format settings ---
+        output_filename = base_original_filename + "." + self.get_file_extension()
         # --- END MODIFICATION ---
         all_resolutions_succeeded = True
 
         if not hasattr(self, 'output_folder') or not self.output_folder:
             self.logger.error("Output folder is not set before processing image! Defaulting...")
-            self.output_folder = os.path.join(get_base_path(), "output_resized", "default_fallback")
+            # --- MODIFIED: Use base output_resized folder as fallback ---
+            self.output_folder = os.path.join(get_base_path(), "output_resized")
+            # --- END MODIFICATION ---
             os.makedirs(self.output_folder, exist_ok=True)
 
         # Calculate relative path from base folder to preserve folder structure
@@ -4298,24 +4332,64 @@ class ImageResizerApp:
                     self.logger.info(f"Skipping paste for {target_w}x{target_h} on {original_filename} due to invalid crop box.")
 
                 # Create the full output path preserving folder structure
-                resolution_specific_folder = os.path.join(self.output_folder, f"{target_w}x{target_h}")
+                # --- MODIFIED: Use manual structure: output_resized/format+bitdepth/resolution/original_folder_structure ---
+                format_bitdepth_folder = f"{self.output_format.lower()}{self.output_bit_depth}"
+                
+                # Check if timestamp option is enabled
+                if self.use_timestamp_output:
+                    timestamp_folder = datetime.now().strftime("%Y%m%d_%H%M%S")
+                    base_output_path = os.path.join(self.output_folder, timestamp_folder)
+                else:
+                    base_output_path = self.output_folder
+                
+                resolution_specific_folder = os.path.join(base_output_path, format_bitdepth_folder, f"{target_w}x{target_h}")
                 if rel_path:
                     # Add the relative path to preserve folder structure
-                    full_output_folder = os.path.join(resolution_specific_folder, rel_path)
+                    final_output_folder = os.path.join(resolution_specific_folder, rel_path)
                 else:
-                    full_output_folder = resolution_specific_folder
-                
-                os.makedirs(full_output_folder, exist_ok=True)
-                # --- MODIFIED: Use BMP filename for output path ---
-                output_path = os.path.join(resolution_specific_folder,full_output_folder, output_filename_bmp)
+                    final_output_folder = resolution_specific_folder
                 # --- END MODIFICATION ---
-                result.save(output_path)
+                
+                os.makedirs(final_output_folder, exist_ok=True)
+                # --- MODIFIED: Use dynamic file extension based on format settings ---
+                output_path = os.path.join(final_output_folder, output_filename)
+                # --- END MODIFICATION ---
+                
+                # --- MODIFIED: Use proper format and options for saving ---
+                save_options = self.get_save_options()
+                if save_options:
+                    # Convert image to appropriate mode if needed
+                    if 'mode' in save_options and result.mode != save_options['mode']:
+                        if save_options['mode'] == '1':
+                            # Convert to binary (black and white)
+                            result = result.convert('L').point(lambda x: 0 if x < 128 else 255, '1')
+                        elif save_options['mode'] == 'P':
+                            # Convert to palette mode
+                            result = result.convert('P')
+                        elif save_options['mode'] == 'L':
+                            # Convert to grayscale
+                            result = result.convert('L')
+                        elif save_options['mode'] == 'RGB':
+                            # Convert to RGB
+                            result = result.convert('RGB')
+                        elif save_options['mode'] == 'RGBA':
+                            # Convert to RGBA
+                            result = result.convert('RGBA')
+                    
+                    result.save(output_path, format=self.get_save_format(), **save_options)
+                else:
+                    # Fallback to default save
+                    result.save(output_path, format=self.get_save_format())
+                # --- END MODIFICATION ---
+                
+                # Store the actual file location for this resolution
+                self.last_output_file_locations[(target_w, target_h)] = output_path
                 self.last_output_path = output_path
 
-                self.stats_manager.add_processed_file(output_filename_bmp, [(target_w, target_h)], self.bg_color)
+                self.stats_manager.add_processed_file(output_filename, [(target_w, target_h)], self.bg_color)
 
             except Exception as e_proc:
-                error_message = f"Error processing {output_filename_bmp} for {target_w}x{target_h}: {e_proc}"
+                error_message = f"Error processing {output_filename} for {target_w}x{target_h}: {e_proc}"
                 detailed_traceback = traceback.format_exc()
 
                 # Force logging and output of the traceback
@@ -4366,52 +4440,280 @@ class ImageResizerApp:
 
         folder_button = ttk.Button(action_buttons_frame, text="Folder of Images", command=lambda: handle_choice("folder"))
         folder_button.pack(fill=tk.X, padx=10, pady=2)
-
-        cancel_frame = ttk.Frame(content_frame)
-        cancel_frame.pack(fill=tk.X, pady=(5,0))
-
-        cancel_button = ttk.Button(cancel_frame, text="Cancel", command=dialog.destroy, width=12)
-        cancel_button.pack(pady=(5,5))
-
-        dialog.protocol("WM_DELETE_WINDOW", dialog.destroy)
-        img_button.focus_set()
-
+        
+        # Add Cancel button
+        cancel_button = ttk.Button(action_buttons_frame, text="Cancel", command=dialog.destroy, width=15)
+        cancel_button.pack(padx=10, pady=2)
+        
+        # Center the dialog on the screen
         dialog.update_idletasks()
-        width = dialog.winfo_reqwidth()
-        height = dialog.winfo_reqheight()
+        width = dialog.winfo_width()
+        height = dialog.winfo_height()
+        screen_width = dialog.winfo_screenwidth()
+        screen_height = dialog.winfo_screenheight()
+        x = (screen_width // 2) - (width // 2)
+        y = (screen_height // 2) - (height // 2)
+        dialog.geometry(f"{width}x{height}+{x}+{y}")
+
+    def get_save_options(self):
+        options = {}
+        if self.output_format == "BMP":
+            # No additional options needed for BMP
+            pass
+        elif self.output_format == "PNG":
+            # No additional options needed for PNG
+            pass
+        elif self.output_format == "JPG":
+            if self.output_bit_depth == 8:
+                options['mode'] = 'L'
+            elif self.output_bit_depth == 16:
+                options['mode'] = 'RGB'
+            elif self.output_bit_depth == 24:
+                options['mode'] = 'RGB'
         
-        main_x = self.root.winfo_x()
-        main_y = self.root.winfo_y()
-        main_w = self.root.winfo_width()
-        main_h = self.root.winfo_height()
-
-        if main_w == 1 and main_h == 1: 
-            screen_w = dialog.winfo_screenwidth()
-            screen_h = dialog.winfo_screenheight()
-            x = (screen_w // 2) - (width // 2)
-            y = (screen_h // 2) - (height // 2)
-        else:
-            x = main_x + (main_w // 2) - (width // 2)
-            y = main_y + (main_h // 2) - (height // 2)
+        elif self.output_format == "JPEG":
+            if self.output_bit_depth == 8:
+                options['mode'] = 'L'
+            elif self.output_bit_depth == 16:
+                options['mode'] = 'RGB'
+            elif self.output_bit_depth == 24:
+                options['mode'] = 'RGB'
         
-        dialog.geometry(f'{width}x{height}+{x}+{y}')
+        return options
 
-        dialog.wait_window() # Wait for the dialog to be closed before returning
+    def get_file_extension(self):
+        """Get the file extension based on current format settings."""
+        return self.output_format.lower()
 
-    def handle_ctrl_g_grid_toggle(self, event=None): # <<< ADDED new method for Ctrl+G
+    def get_save_format(self):
+        """Get the PIL format string for saving."""
+        return self.output_format
+
+    def update_output_folder_name(self):
+        """Update the output folder name to match the manual structure."""
+        # --- MODIFIED: Use base output_resized folder as shown in manual ---
+        self.output_folder = os.path.join(get_base_path(), "output_resized")
+        os.makedirs(self.output_folder, exist_ok=True)
+        if hasattr(self, 'logger') and self.logger:
+            self.logger.info(f"Output folder updated to: {self.output_folder}")
+        # --- END MODIFICATION ---
+
+    def handle_ctrl_g_grid_toggle(self, event=None):
+        """Handle Ctrl+G keyboard shortcut to toggle grid visibility."""
         self.show_grid_var.set(not self.show_grid_var.get())
         self.toggle_grid()
 
+    def save_image(self, event=None):
+        """Save the current image (Ctrl+S shortcut)."""
+        if self.current_image and self.image_paths:
+            # Process the current image at the center
+            center_x = self.current_image.width // 2
+            center_y = self.current_image.height // 2
+            self.process_image(center_x, center_y)
+            self.logger.info("Current image saved via Ctrl+S shortcut")
+
+    def save_all_images(self, event=None):
+        """Save all images in the current folder (Ctrl+Shift+S shortcut)."""
+        if self.image_paths:
+            # Process all images in the folder
+            for i in range(len(self.image_paths)):
+                self.current_index = i
+                self.show_image()
+                if self.current_image:
+                    center_x = self.current_image.width // 2
+                    center_y = self.current_image.height // 2
+                    self.process_image(center_x, center_y)
+            self.logger.info("All images saved via Ctrl+Shift+S shortcut")
+
+    def toggle_log_window(self):
+        """Toggle the visibility of the debug console."""
+        if self.log_window.state() == 'withdrawn':
+            self.log_window.deiconify()
+        else:
+            self.log_window.withdraw()
+
+    def update_preview_systems_for_new_image(self):
+        """Update preview systems when a new image is loaded."""
+        try:
+            # Update crop preview windows if in crop preview mode
+            if self.preview_mode_var.get() == "Show Crop Preview":
+                # Clear existing crop preview windows
+                if hasattr(self, 'preview_windows'):
+                    for idx, window in list(self.preview_windows.items()):
+                        if isinstance(window, tk.Toplevel) and window.winfo_exists():
+                            try:
+                                window.destroy()
+                            except tk.TclError:
+                                pass
+                    self.preview_windows = {}
+                
+                # If we have valid cursor coordinates, update the previews
+                if hasattr(self, 'cursor_x') and hasattr(self, 'cursor_y') and \
+                   self.current_image and \
+                   (0 <= self.cursor_x < self.current_image.width and 0 <= self.cursor_y < self.current_image.height):
+                    self.update_preview_windows(self.cursor_x, self.cursor_y)
+                elif self.current_image:
+                    # Use center coordinates as fallback
+                    center_x = self.current_image.width // 2
+                    center_y = self.current_image.height // 2
+                    self.update_preview_windows(center_x, center_y)
+            
+            # Update last output preview if in last output mode
+            elif self.preview_mode_var.get() == "Show Last Output":
+                # Clear existing last output previews
+                if hasattr(self, 'last_output_previews_frame') and self.last_output_previews_frame and self.last_output_previews_frame.winfo_exists():
+                    for widget in self.last_output_previews_frame.winfo_children():
+                        widget.destroy()
+                
+                # Reset preview_windows dictionary for last output mode
+                self.preview_windows = {}
+                
+                # Update last output previews for all selected resolutions
+                if hasattr(self, 'last_output_resolution_vars') and self.last_output_resolution_vars:
+                    for i, var in enumerate(self.last_output_resolution_vars):
+                        if var.get() and i < len(TARGET_SIZE):
+                            res_w, res_h = TARGET_SIZE[i]
+                            self.update_last_output_preview(res_w, res_h)
+            
+            self.logger.info(f"Preview systems updated for new image (index {self.current_index})")
+            
+        except Exception as e:
+            self.logger.error(f"Error updating preview systems for new image: {str(e)}")
+            self.logger.error(traceback.format_exc())
+
+    def update_crop_previews_for_new_settings(self):
+        """Update crop previews when output settings (format, bit depth) change."""
+        try:
+            if self.preview_mode_var.get() == "Show Crop Preview" and self.current_image:
+                # Clear existing crop preview windows
+                if hasattr(self, 'preview_windows'):
+                    for idx, window in list(self.preview_windows.items()):
+                        if isinstance(window, tk.Toplevel) and window.winfo_exists():
+                            try:
+                                window.destroy()
+                            except tk.TclError:
+                                pass
+                    self.preview_windows = {}
+                
+                # Ensure crop_preview_dialog_vars are properly initialized for the new TARGET_SIZE
+                if not hasattr(self, 'crop_preview_dialog_vars') or \
+                   not isinstance(self.crop_preview_dialog_vars, list) or \
+                   len(self.crop_preview_dialog_vars) != len(TARGET_SIZE):
+                    # Re-initialize dialog vars to match current TARGET_SIZE
+                    self.crop_preview_dialog_vars = [tk.BooleanVar(value=True) for _ in TARGET_SIZE]
+                    self.logger.info("Re-initialized crop_preview_dialog_vars for new output settings")
+                
+                # If we have valid cursor coordinates, update the previews
+                if hasattr(self, 'cursor_x') and hasattr(self, 'cursor_y') and \
+                   self.current_image and \
+                   (0 <= self.cursor_x < self.current_image.width and 0 <= self.cursor_y < self.current_image.height):
+                    self._update_all_crop_previews_based_on_dialog(self.cursor_x, self.cursor_y)
+                elif self.current_image:
+                    # Use center coordinates as fallback
+                    center_x = self.current_image.width // 2
+                    center_y = self.current_image.height // 2
+                    self._update_all_crop_previews_based_on_dialog(center_x, center_y)
+                
+                self.logger.info("Crop previews updated for new output settings")
+        except Exception as e:
+            self.logger.error(f"Error updating crop previews for new settings: {str(e)}")
+            self.logger.error(traceback.format_exc())
+
+    def refresh_crop_preview_settings_dialog(self):
+        """Refresh the crop preview settings dialog to show current TARGET_SIZE resolutions."""
+        try:
+            if not hasattr(self, 'crop_settings_dialog') or not self.crop_settings_dialog or not self.crop_settings_dialog.winfo_exists():
+                return
+            
+            # Clear existing content in the dialog
+            for widget in self.crop_settings_dialog.winfo_children():
+                widget.destroy()
+            
+            # Re-initialize dialog-specific boolean vars for the new TARGET_SIZE
+            if not hasattr(self, 'crop_preview_dialog_vars') or \
+               not isinstance(self.crop_preview_dialog_vars, list) or \
+               len(self.crop_preview_dialog_vars) != len(TARGET_SIZE):
+                self.crop_preview_dialog_vars = [tk.BooleanVar(value=True) for _ in TARGET_SIZE]
+                self.logger.info("Re-initialized crop_preview_dialog_vars for dialog refresh")
+            
+            # Recreate the dialog content
+            main_frame = ttk.Frame(self.crop_settings_dialog, padding="10")
+            main_frame.pack(fill=tk.BOTH, expand=True)
+
+            ttk.Label(main_frame, text="Select resolutions for live crop preview:").pack(pady=(0, 10))
+            
+            res_frame = ttk.Frame(main_frame)
+            res_frame.pack(pady=5, padx=10, fill="x", expand=True)
+
+            for i, (w, h) in enumerate(TARGET_SIZE):
+                var = self.crop_preview_dialog_vars[i]
+                # The command directly calls the handler for toggling a single preview window
+                cb = ttk.Checkbutton(res_frame, text=f"{w}x{h}", variable=var, 
+                                     command=lambda idx=i, v=var: self._toggle_single_crop_preview_window(idx, v.get()))
+                cb.pack(anchor="w")
+
+            def on_dialog_close_button():
+                self.logger.info("Crop preview settings dialog 'Close' button clicked.")
+                if self.crop_settings_dialog and self.crop_settings_dialog.winfo_exists():
+                    self.crop_settings_dialog.destroy()
+                self.crop_settings_dialog = None
+
+            ttk.Button(main_frame, text="Close", command=on_dialog_close_button).pack(pady=(10,0))
+            self.crop_settings_dialog.protocol("WM_DELETE_WINDOW", on_dialog_close_button)
+            
+            # Update dialog title to reflect new settings
+            self.crop_settings_dialog.title(f"Crop Preview Settings - {len(TARGET_SIZE)} resolution(s)")
+            
+            self.logger.info("Crop preview settings dialog refreshed with new resolutions")
+            
+        except Exception as e:
+            self.logger.error(f"Error refreshing crop preview settings dialog: {str(e)}")
+            self.logger.error(traceback.format_exc())
+
+
 if __name__ == "__main__":
     root = tk.Tk()
-    app = ImageResizerApp(root)
-    # Only run mainloop if setup was successful and root window still exists
-    if hasattr(app, 'setup_successful') and app.setup_successful and root.winfo_exists():
-        root.mainloop()
-    elif not (hasattr(app, 'setup_successful') and app.setup_successful):
-        # This case handles if app initialization failed catastrophically before setup_successful was even set
-        # or if setup_successful is False. The after_idle(root.destroy) should have been called.
-        # We add a failsafe print here for debugging, mainloop won't run.
-        print("Application setup failed or was aborted. Exiting.")
-        if root.winfo_exists(): # If destroy wasn't called or hasn't processed, ensure it does.
+    
+    # Center the main window on the screen
+    root.update_idletasks()
+    width = 800  # Default width
+    height = 600  # Default height
+    screen_width = root.winfo_screenwidth()
+    screen_height = root.winfo_screenheight()
+    x = (screen_width // 2) - (width // 2)
+    y = (screen_height // 2) - (height // 2)
+    root.geometry(f"{width}x{height}+{x}+{y}")
+    
+    try:
+        # Try to set the icon
+        try:
+            root.iconbitmap(resource_path("mewsiepto.ico"))
+        except Exception as e:
+            print(f"[Warning] Failed to load icon: {e}")
+
+        # Load manual contents
+        manual_contents_for_app = None
+        try:
+            manual_path_val = resource_path("manual.md")
+            with open(manual_path_val, "r", encoding="utf-8") as f:
+                manual_contents_for_app = f.read()
+        except Exception as e:
+            print(f"[Error] Failed to load manual.md for app: {e}")
+            # manual_contents_for_app remains None
+
+        app = ImageResizerApp(root, manual_contents=manual_contents_for_app)
+        # Only run mainloop if setup was successful and root window still exists
+        if hasattr(app, 'setup_successful') and app.setup_successful and root.winfo_exists():
+            root.mainloop()
+        elif not (hasattr(app, 'setup_successful') and app.setup_successful):
+            # This case handles if app initialization failed catastrophically before setup_successful was even set
+            # or if setup_successful is False. The after_idle(root.destroy) should have been called.
+            # We add a failsafe print here for debugging, mainloop won't run.
+            print("Application setup failed or was aborted. Exiting.")
+            if root.winfo_exists(): # If destroy wasn't called or hasn't processed, ensure it does.
+                root.destroy()
+    except Exception as e:
+        print(f"Error starting application: {e}")
+        if root.winfo_exists():
             root.destroy()
+

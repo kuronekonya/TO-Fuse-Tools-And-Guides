@@ -17,13 +17,24 @@ It has many features, including bulk processing, preview modes, and easily all-c
 
 5. Use the arrow keys to navigate between images
 
-## Supported Stuff
+## Supported File Types
 
+**Input**
 - *.png
 - *.jpg
 - *.jpeg
 - *.bmp 
 - Folders
+- Transparency in these images
+
+**Output + Bits**
+
+Default is BMP-24bit
+
+- "BMP": [1, 4, 8, 16, 24, 32]
+- "PNG": [8, 16, 24, 32]
+- "JPG": [8, 16, 24]
+- "JPEG": [8, 16, 24]
 
 ## Grids
 
@@ -98,22 +109,42 @@ Images are saved in the following structure:
 
 ```
 output_resized/
-  ├── timestamp/
-  │   ├── 50x50/
-  │   │   └── original_folder_structure/
-  │   └── 100x100/
-  │       └── original_folder_structure/
+  └── timestamp/
+       ├─── bmp24/
+       │   ├─── 50x50/
+       │   │     └─── original_folder_structure/
+       │   └─── 100x100/
+       │         └─── original_folder_structure/
+       ├─ png32/
+       │   ├─── 200x200/
+       │   │     └─── original_folder_structure/
+       │   └─── 150x150/
+       │         └─── original_folder_structure/
+       └─ jpg24/
+            └─── 100x100/
+                └─── original_folder_structure/
 ```
 
 or
 
 ```
 output_resized/
-  ├── timestamp/
-  │   └── original_folder_structure/
+  ├─ bmp24/
+  │   ├─── 50x50/
+  │   │     └─── original_folder_structure/
+  │   └─── 100x100/
+  │         └─── original_folder_structure/
+  ├─ png32/
+  │   ├─── 200x200/
+  │   │     └─── original_folder_structure/
+  │   └─── 150x150/
+  │         └─── original_folder_structure/
+  └─ jpg24/
+      └─── 100x100/
+            └─── original_folder_structure/
 ```
 
-You also can choose the folder location (File > Change Input Folder...). By default, it goes to the same folder/location as the .exe/.py files.
+You also can choose the folder location (File > Change Output Folder...). By default, it goes to the same folder/location as the .exe/.py files. You also can change whether or not to use the timestamp method there, as well.
 
 
 ## Statistics
@@ -196,3 +227,12 @@ The application tracks (ONLY LOCALLY):
 - Removed About menu option -> Migrated to Manual
 - Works with transparent images! Yes, even the previews!
 - Right clicking the Reset Background Color button brings up a colorpicker
+
+### v4.1 - EMERGENCY FIX
+
+- Fix for file structure output
+
+### v5 - Output Options
+
+- Added support for exporting in multiple file formats (JPG, JPEG, PNG, BMP) in varied bit rates (up to 32 for PNG+BMP). More specifics in the Manual.
+- Changed File Structure handling

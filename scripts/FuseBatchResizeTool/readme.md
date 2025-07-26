@@ -1,3 +1,6 @@
+# THE RAW CODE DOES NOT CURRENTLY WORK PLEASE USE THE EXE OR AN EARLIER VERSION!!!!!!!!!!
+It was the only way I could update the rest of the archive :(
+
 # Manual Center Image Resizer
 
 A tiny desktop app that lets you manually center images for batch standardization — no cropping, no stress.
